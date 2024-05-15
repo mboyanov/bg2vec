@@ -1,4 +1,6 @@
 from itertools import chain
+
+from datasets.formatting.formatting import LazyBatch
 from transformers import PreTrainedTokenizer
 
 def _tokenize_by_line(raw_datasets, tokenizer, data_args, training_args, text_column_name="text",max_seq_length=1024):
@@ -80,7 +82,18 @@ def tokenize_datasets(raw_datasets, tokenizer, data_args, training_args, text_co
 
 # Main data processing function that will concatenate all texts from our dataset and generate chunks of
 # max_seq_length.
-def group_texts(examples, max_seq_length=1024):
+def group_texts(examples:LazyBatch, max_seq_length=1024):
+    """
+    This function will receive a batch of texts and return a list of chunks of texts that have length max_seq_length.
+    Intended usage with `datasets.map(ds, batched=True)`
+
+    # Note that with `batched=True`, this map processes 1,000 texts together, so group_texts throws away a
+    # remainder for each of those groups of 1,000 texts. You can adjust that batch_size here but a higher value
+    # might be slower to preprocess.
+    #
+    # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
+    # https://huggingface.co/docs/datasets/process#map
+    """
     # Concatenate all texts.
     concatenated_examples = {
         k: list(chain(*examples[k])) for k in examples.keys()
@@ -99,10 +112,5 @@ def group_texts(examples, max_seq_length=1024):
     }
     return result
 
-# Note that with `batched=True`, this map processes 1,000 texts together, so group_texts throws away a
-# remainder for each of those groups of 1,000 texts. You can adjust that batch_size here but a higher value
-# might be slower to preprocess.
-#
-# To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
-# https://huggingface.co/docs/datasets/process#map
+
 
