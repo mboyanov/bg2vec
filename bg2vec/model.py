@@ -1,7 +1,11 @@
 from typing import Optional, List
 
+import torch
 from llm2vec.models import MistralBiForMNTP, LlamaBiForMNTP
 from peft import LoraConfig, get_peft_model
+from transformers import AutoConfig
+
+from bg2vec.arguments import ModelArguments
 
 
 def get_model_class(config):
@@ -50,3 +54,43 @@ def initialize_peft(
     peft_model.print_trainable_parameters()
     model.set_model_for_peft(peft_model)
     return model
+
+
+def load_adapted_model(model_args: ModelArguments, adapter_path):
+    """
+    Load a model with an adapter from a given path. Note that saving the model does not persist the lm_head, so
+    the adapted model is not suitable for generation tasks.
+    """
+    config_kwargs = {
+        "cache_dir": model_args.cache_dir,
+        "revision": model_args.model_revision,
+        "token": model_args.token,
+        "trust_remote_code": model_args.trust_remote_code,
+    }
+    config = None
+    if model_args.config_name:
+        config = AutoConfig.from_pretrained(model_args.config_name, **config_kwargs)
+    elif model_args.model_name_or_path:
+        config = AutoConfig.from_pretrained(
+            model_args.model_name_or_path, **config_kwargs
+        )
+    model_class = get_model_class(config)
+    torch_dtype = (
+        model_args.torch_dtype
+        if model_args.torch_dtype in ["auto", None] else getattr(torch, model_args.torch_dtype)
+    )
+    model = model_class.from_pretrained(
+        model_args.model_name_or_path,
+        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        config=config,
+        cache_dir=model_args.cache_dir,
+        revision=model_args.model_revision,
+        token=model_args.token,
+        trust_remote_code=model_args.trust_remote_code,
+        torch_dtype=torch_dtype,
+        low_cpu_mem_usage=model_args.low_cpu_mem_usage,
+        attn_implementation=model_args.attn_implementation
+    )
+    model.model.load_adapter(adapter_path)
+    return model
+
