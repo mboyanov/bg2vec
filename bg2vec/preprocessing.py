@@ -43,7 +43,7 @@ def _tokenize_by_line(raw_datasets, tokenizer, data_args, training_args, text_co
     return tokenized_datasets
 
 
-def _tokenize_dataset(raw_datasets, tokenizer, data_args, training_args, text_column_name="text",max_seq_length=1024):
+def _tokenize_dataset(raw_datasets, tokenizer, data_args, training_args, text_column_name="text"):
     # Otherwise, we tokenize every text, then concatenate them together before splitting them in smaller parts.
     # We use `return_special_tokens_mask=True` because DataCollatorForLanguageModeling (see below) is more
     # efficient when it receives the `special_tokens_mask`.
@@ -78,7 +78,7 @@ def tokenize_datasets(raw_datasets, tokenizer, data_args, training_args, text_co
     if data_args.line_by_line:
         return _tokenize_by_line(raw_datasets, tokenizer, data_args, training_args, text_column_name=text_column_name,max_seq_length=max_seq_length)
     else:
-        return _tokenize_dataset(raw_datasets, tokenizer, data_args, training_args, text_column_name=text_column_name,max_seq_length=max_seq_length)
+        return _tokenize_dataset(raw_datasets, tokenizer, data_args, training_args, text_column_name=text_column_name)
 
 # Main data processing function that will concatenate all texts from our dataset and generate chunks of
 # max_seq_length.
