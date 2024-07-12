@@ -275,3 +275,130 @@ class CustomArguments:
 parser = HfArgumentParser(
     (ModelArguments, DataTrainingArguments, TrainingArguments, CustomArguments)
 )
+
+
+@dataclass
+class SimCSEModelArguments:
+    """
+    Arguments pertaining to which model/config/tokenizer we are going to fine-tune, or train from scratch.
+    """
+
+    model_name_or_path: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": (
+                "The base model checkpoint for weights initialization. Don't set if you want to train a model from scratch."
+            )
+        },
+    )
+    peft_model_name_or_path: Optional[str] = field(
+        default=None,
+        metadata={"help": ("The PEFT model checkpoint to add on top of base model.")},
+    )
+    bidirectional: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to enable bidirectional attention in the model. If set to False, the model will use unidirectional attention."
+            )
+        },
+    )
+    max_seq_length: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": (
+                "The maximum total input sequence length after tokenization. Sequences longer "
+                "than this will be truncated."
+            )
+        },
+    )
+    torch_dtype: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": (
+                "Override the default `torch.dtype` and load the model under this dtype. If `auto` is passed, the "
+                "dtype will be automatically derived from the model's weights."
+            ),
+            "choices": ["auto", "bfloat16", "float16", "float32"],
+        },
+    )
+    attn_implementation: Optional[str] = field(
+        default="sdpa",
+        metadata={
+            "help": ("The attention implementation to use in the model."),
+            "choices": ["eager", "sdpa", "flash_attention_2"],
+        },
+    )
+    pooling_mode: Optional[str] = field(
+        default="mean",
+        metadata={
+            "help": ("The pooling mode to use in the model."),
+            "choices": ["mean", "weighted_mean", "eos_token"],
+        },
+    )
+
+
+@dataclass
+class SimCSEDataTrainingArguments:
+    """
+    Arguments pertaining to what data we are going to input our model for training and eval.
+    """
+
+    dataset_name: Optional[str] = field(
+        default=None,
+        metadata={"help": "The name of the dataset to use. Options: E5"},
+    )
+    dataset_file_path: Optional[str] = field(
+        default=None, metadata={"help": "The input training data file or folder."}
+    )
+    # TODO: implement this
+    max_train_samples: Optional[int] = field(
+        default=None,
+        metadata={
+            "help": (
+                "For debugging purposes or quicker training, truncate the number of training examples to this "
+                "value if set."
+            )
+        },
+    )
+
+
+@dataclass
+class SimCSECustomArguments:
+    """
+    Custom arguments for the script
+    """
+
+    simcse_dropout: float = field(
+        default=0.1, metadata={"help": "The SimCSE dropout rate for the model"}
+    )
+
+    lora_dropout: float = field(
+        default=0.05, metadata={"help": "The dropout rate for lora"}
+    )
+
+    lora_r: int = field(default=8, metadata={"help": "The r value for lora"})
+
+    stop_after_n_steps: int = field(
+        default=10000, metadata={"help": "Stop training after n steps"}
+    )
+
+    experiment_id: Optional[str] = field(
+        default=None, metadata={"help": "The experiment id"}
+    )
+
+    loss_class: Optional[str] = field(
+        default="HardNegativeNLLLoss",
+        metadata={
+            "help": "The loss class to use for training. Options: HardNegativeNLLLoss"
+        },
+    )
+
+    loss_scale: float = field(
+        default=50.0, metadata={"help": "The loss scale for the loss function"}
+    )
+
+
+simcse_parser = HfArgumentParser(
+        (SimCSEModelArguments, SimCSEDataTrainingArguments, TrainingArguments, SimCSECustomArguments)
+    )
