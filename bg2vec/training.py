@@ -130,6 +130,7 @@ class SimCSETrainer(Trainer):
         torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
 
 
+
 @dataclass
 class SimCSEDefaultCollator:
     model: LLM2Vec
