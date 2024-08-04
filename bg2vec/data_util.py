@@ -8,6 +8,7 @@
 # In distributed training, the load_dataset function guarantee that only one local process can concurrently
 # download the dataset.
 from datasets import load_dataset
+from llm2vec.dataset.dataset import Dataset, TrainSample, DataSample
 
 
 
@@ -79,3 +80,23 @@ def _load_from_files(data_args, model_args):
             token=model_args.token,
         )
     return raw_datasets
+
+
+
+
+class PairedDataset(Dataset):
+
+    def __init__(self, data:Dataset):
+        self.data = []
+        for i, t in enumerate(data['text']):
+            self.data.append(DataSample(id_=i, query=t, positive=t))
+
+    def load_data(self, file_path: str = None):
+        pass
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        sample = self.data[index]
+        return TrainSample(texts=[sample.query, sample.positive], label=1.0)
