@@ -49,7 +49,7 @@ def initialize_peft(
         task_type=None,
     )
     # model organization is MODEL_TYPEBiForMNTP.model -> MODEL_TYPELBiModel, we have to apply PEFT to the inner model
-    peft_model = get_peft_model(model.get_model_for_peft(), config)
+    peft_model = get_peft_model(model, config)
     print(f"Model's Lora trainable parameters:")
     peft_model.print_trainable_parameters()
     return peft_model
