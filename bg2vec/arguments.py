@@ -336,6 +336,21 @@ class SimCSEModelArguments:
             "choices": ["mean", "weighted_mean", "eos_token"],
         },
     )
+    cache_dir: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
+    )
+    token: str = field(
+        default=None,
+        metadata={
+            "help": (
+                "The token to use as HTTP bearer authorization for remote files. If not specified, will use the token "
+                "generated when running `huggingface-cli login` (stored in `~/.huggingface`)."
+            )
+        },
+    )
 
 
 @dataclass
@@ -361,6 +376,21 @@ class SimCSEDataTrainingArguments:
             )
         },
     )
+    validation_split_percentage: Optional[int] = field(
+        default=5,
+        metadata={
+            "help": "The percentage of the train set used as validation set in case there's no validation split"
+        },
+    )
+    dataset_config_name: Optional[str] = field(
+        default=None,
+        metadata={
+            "help": "The configuration name of the dataset to use (via the datasets library)."
+        },
+    )
+    streaming: bool = field(default=False, metadata={"help": "Enable streaming mode"})
+
+
 
 
 @dataclass
