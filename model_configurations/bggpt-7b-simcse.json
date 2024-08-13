@@ -19,5 +19,6 @@
   "lora_r": 16,
   "dataloader_num_workers": 6,
   "dataloader_prefetch_factor": 3,
-  "bidirectional": true
+  "bidirectional": true,
+  "simcse_dropout": 0.3
 }
