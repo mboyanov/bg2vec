@@ -1,9 +1,13 @@
-from typing import Any, Optional, Tuple
-
-from transformers import DataCollatorForLanguageModeling, TrainerCallback, Trainer
-import torch
-import os
 import logging
+import os
+from dataclasses import dataclass
+from typing import Any, Optional, Tuple, List
+from typing import Dict, Union
+
+import torch
+import torch.nn as nn
+from llm2vec import LLM2Vec
+from transformers import DataCollatorForLanguageModeling, TrainerCallback, Trainer
 
 logger = logging.getLogger(__name__)
 
@@ -75,3 +79,81 @@ class MNTPTrainer(Trainer):
 
         # Good practice: save your training arguments together with the trained model
         torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+
+
+
+
+class SimCSETrainer(Trainer):
+
+    def __init__(
+        self,
+        *args,
+        loss_function=None,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.loss_function = loss_function
+
+    def compute_loss(
+        self,
+        model: nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        return_outputs: bool = False,
+    ) -> Union[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
+        features, labels = inputs
+        q_reps = self.model(features[0])
+        d_reps = self.model(features[1])
+
+        d_reps_neg = None
+        if len(features) > 2:
+            d_reps_neg = self.model(features[2])
+
+        loss = self.loss_function(q_reps, d_reps, d_reps_neg)
+
+        if return_outputs:
+            output = torch.cat(
+                [model(row)["sentence_embedding"][:, None] for row in features], dim=1
+            )
+            return loss, output
+
+        return loss
+
+    def _save(self, output_dir: Optional[str] = None, state_dict=None):
+        # If we are executing this function, we are the process zero, so we don't check for that.
+        output_dir = output_dir if output_dir is not None else self.args.output_dir
+        os.makedirs(output_dir, exist_ok=True)
+        logger.info(f"Saving model checkpoint to {output_dir}")
+
+        self.model.save(output_dir)
+
+        # Good practice: save your training arguments together with the trained model
+        torch.save(self.args, os.path.join(output_dir, "training_args.bin"))
+
+
+
+@dataclass
+class SimCSEDefaultCollator:
+    model: LLM2Vec
+
+    def __init__(self, model: LLM2Vec) -> None:
+        self.model = model
+
+    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+        batch = features
+        num_texts = len(batch[0].texts)
+        texts = [[] for _ in range(num_texts)]
+        labels = []
+
+        for example in batch:
+            for idx, text in enumerate(example.texts):
+                # TODO: Add prepare_for_tokenization here similar to supervised training and see if it impacts performance
+                texts[idx].append(text)
+            labels.append(example.label)
+        labels = torch.tensor(labels)
+
+        sentence_features = []
+        for idx in range(num_texts):
+            tokenized = self.model.tokenize(texts[idx])
+            sentence_features.append(tokenized)
+
+        return sentence_features, labels

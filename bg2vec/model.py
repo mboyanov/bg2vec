@@ -49,11 +49,12 @@ def initialize_peft(
         task_type=None,
     )
     # model organization is MODEL_TYPEBiForMNTP.model -> MODEL_TYPELBiModel, we have to apply PEFT to the inner model
-    peft_model = get_peft_model(model.get_model_for_peft(), config)
+    peft_model = get_peft_model(model, config)
     print(f"Model's Lora trainable parameters:")
     peft_model.print_trainable_parameters()
-    model.set_model_for_peft(peft_model)
-    return model
+    return peft_model
+
+
 
 
 def load_adapted_model(model_args: ModelArguments, adapter_path):
@@ -94,3 +95,4 @@ def load_adapted_model(model_args: ModelArguments, adapter_path):
     model.model.load_adapter(adapter_path)
     return model
 
+from llm2vec.loss.utils import load_loss
