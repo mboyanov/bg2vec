@@ -1,12 +1,13 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple, List
+from typing import Any, Optional, Tuple, List, Callable
 from typing import Dict, Union
 
 import torch
 import torch.nn as nn
 from llm2vec import LLM2Vec
+from llm2vec.dataset.dataset import TrainSample
 from transformers import DataCollatorForLanguageModeling, TrainerCallback, Trainer
 
 logger = logging.getLogger(__name__)
@@ -131,29 +132,28 @@ class SimCSETrainer(Trainer):
 
 
 
-@dataclass
 class SimCSEDefaultCollator:
-    model: LLM2Vec
 
-    def __init__(self, model: LLM2Vec) -> None:
-        self.model = model
+    def __init__(self, tokenizer:Callable):
+        self.tokenizer = tokenizer
 
-    def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    def __call__(self, features: List[TrainSample]):
         batch = features
         num_texts = len(batch[0].texts)
         texts = [[] for _ in range(num_texts)]
         labels = []
 
+        # stack the texts vertically
+
         for example in batch:
             for idx, text in enumerate(example.texts):
-                # TODO: Add prepare_for_tokenization here similar to supervised training and see if it impacts performance
                 texts[idx].append(text)
             labels.append(example.label)
         labels = torch.tensor(labels)
 
         sentence_features = []
         for idx in range(num_texts):
-            tokenized = self.model.tokenize(texts[idx])
+            tokenized = self.tokenizer(texts[idx])
             sentence_features.append(tokenized)
 
         return sentence_features, labels
