@@ -1,0 +1,26 @@
+[project]
+name = "bg2vec"
+version = "0.0.4"
+authors = [
+  { name="Martin Boyanov", email="mboyanov@gmail.com" },
+]
+description = "A text encoder for Bulgarian language"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = ["llm2vec==0.2.0"]
+[project.urls]
+Homepage = "https://github.com/mboyanov/bg2vec"
+Issues = "https://github.com/mboyanov/bg2vec/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bg2vec"]
